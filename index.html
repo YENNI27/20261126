@@ -1,0 +1,1582 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>阿哲防詐連續劇：三關完整防詐挑戰</title>
+  <!-- 載入 Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 載入 Google Fonts: Noto Sans TC 與 Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Noto Sans TC', 'Inter', sans-serif;
+      background-color: #0f172a;
+      background-image: radial-gradient(circle at 20% 20%, rgba(251, 191, 36, 0.14), transparent 45%),
+                        radial-gradient(circle at 80% 80%, rgba(167, 139, 250, 0.14), transparent 45%);
+    }
+
+    /* 手繪柔和卡片陰影 */
+    .pastel-card {
+      box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.25), 0 4px 10px -2px rgba(15, 23, 42, 0.12);
+    }
+
+    /* 破綻熱區互動樣式：平時融入畫面，滑過時微幅提示 */
+    .clue-hotspot {
+      position: relative;
+      cursor: pointer;
+      border-radius: 0.75rem;
+      transition: all 0.2s ease;
+    }
+    .clue-hotspot:hover {
+      background-color: rgba(251, 191, 36, 0.16);
+      outline: 2px dashed rgba(245, 158, 11, 0.65);
+    }
+
+    /* 已發現破綻的紅色圈選狀態 */
+    .clue-found {
+      background-color: rgba(254, 226, 226, 0.75) !important;
+      outline: 2.5px solid #ef4444 !important;
+      animation: popFound 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes popFound {
+      0% { transform: scale(0.95); }
+      60% { transform: scale(1.03); }
+      100% { transform: scale(1); }
+    }
+
+    /* 誤點搖晃動畫 */
+    @keyframes shakeError {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-6px); }
+      40%, 80% { transform: translateX(6px); }
+    }
+    .shake-anim {
+      animation: shakeError 0.35s ease-in-out;
+    }
+
+    /* 呼吸閃爍提示動畫 */
+    @keyframes pulseSoft {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.45; }
+    }
+    .pulse-soft {
+      animation: pulseSoft 1.4s infinite ease-in-out;
+    }
+
+    /* 話術飛彈登場與擊碎動畫 */
+    @keyframes slideInThreat {
+      0% { opacity: 0; transform: translateY(-14px) scale(0.96); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .speech-card-anim {
+      animation: slideInThreat 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+  </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col justify-between p-3 sm:p-5">
+
+  <!-- 主遊戲容器 -->
+  <div class="w-full max-w-4xl mx-auto">
+
+    <!-- 關卡切換導覽列（逐關解鎖機制：第一關過關解鎖第二關，第二關過關解鎖第三關） -->
+    <nav class="flex flex-wrap items-center justify-between bg-[#1e293b]/95 border border-[#334155] rounded-2xl px-4 py-2.5 mb-3 text-xs text-slate-300 gap-2">
+      <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+        <span class="font-bold text-amber-300">📖 阿哲防詐連續劇：</span>
+        <button id="nav-lv1" type="button" class="px-2.5 py-1 rounded-lg font-bold bg-amber-500 text-slate-900 transition">
+          第一關：假截圖找碴
+        </button>
+        <span class="text-slate-500">→</span>
+        <button id="nav-lv2" type="button" disabled class="px-2.5 py-1 rounded-lg font-bold bg-slate-800 text-slate-500 cursor-not-allowed transition">
+          🔒 第二關：話術拆彈
+        </button>
+        <span class="text-slate-500">→</span>
+        <button id="nav-lv3" type="button" disabled class="px-2.5 py-1 rounded-lg font-bold bg-slate-800 text-slate-500 cursor-not-allowed transition">
+          🔒 第三關：資金防線
+        </button>
+      </div>
+      <span id="stage-status-tag" class="text-[11px] text-emerald-300 font-medium">決策背景圖：狀態 0（群組迷霧）</span>
+    </nav>
+
+    <!-- ==================== 第一關區塊 ==================== -->
+    <div id="level-1-wrapper">
+      <!-- 頂部劇情與狀態儀表板 -->
+      <header class="bg-[#fefce8] border-2 border-[#fde68a] rounded-3xl p-4 sm:p-5 mb-4 pastel-card">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div>
+            <div class="inline-flex items-center gap-2 bg-[#fef3c7] text-[#b45309] text-xs font-bold px-3 py-1 rounded-full mb-1.5">
+              <span class="w-2 h-2 rounded-full bg-[#f59e0b] pulse-soft"></span>
+              第一關｜決策背景圖狀態 0 → 點開「VIP 飆股交流群」
+            </div>
+            <h1 class="text-xl sm:text-2xl font-black text-[#1e293b]">真假截圖找碴大作戰</h1>
+            <p class="text-xs sm:text-sm text-[#475569] mt-0.5">
+              阿哲看著群組瘋狂洗版的獲利截圖好心動！快在 <span class="font-bold text-[#d97706]">60 秒內</span> 點出聊天室與對帳單裡的 <span class="font-bold text-[#dc2626]">5 個造假破綻</span>！
+            </p>
+          </div>
+
+          <!-- 遊戲進度與理智防線 -->
+          <div class="flex flex-wrap items-center gap-2 sm:gap-3 shrink-0">
+            <div class="bg-white border border-[#fde68a] rounded-2xl px-3.5 py-2 text-center min-w-[84px]">
+              <div class="text-[11px] font-bold text-[#92400e]">已找破綻</div>
+              <div class="text-lg sm:text-xl font-black text-[#dc2626]">
+                <span id="found-count">0</span> / 5
+              </div>
+            </div>
+
+            <div class="bg-white border border-[#fde68a] rounded-2xl px-3.5 py-2 text-center min-w-[84px]">
+              <div class="text-[11px] font-bold text-[#92400e]">剩餘秒數</div>
+              <div id="timer-display" class="text-lg sm:text-xl font-black text-[#0f172a]">60s</div>
+            </div>
+
+            <div class="bg-[#ecfdf5] border border-[#a7f3d0] rounded-2xl px-3.5 py-2 min-w-[125px]">
+              <div class="flex justify-between text-[11px] font-bold text-[#065f46] mb-1">
+                <span>阿哲理智防線</span>
+                <span id="sanity-text">100%</span>
+              </div>
+              <div class="w-full h-2.5 bg-[#d1fae5] rounded-full overflow-hidden">
+                <div id="sanity-bar" class="h-full bg-gradient-to-r from-[#34d399] to-[#10b981] rounded-full transition-all duration-300" style="width: 100%;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- 第一關主互動舞台 -->
+      <main class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+
+        <!-- 左側：模擬手機聊天室畫面 (佔 7 欄) -->
+        <section id="phone-screen" class="lg:col-span-7 bg-[#f8fafc] border-4 border-[#334155] rounded-[2rem] overflow-hidden pastel-card">
+          <!-- 手機頂部狀態列 -->
+          <div class="bg-[#1e293b] text-white px-5 py-2.5 flex items-center justify-between text-xs">
+            <span class="font-bold">23:43 VIP 飆股財富自由交流群 (186)</span>
+            <span class="bg-[#ef4444] text-white text-[10px] font-bold px-2 py-0.5 rounded-full pulse-soft">
+              ● 廣告熱推中
+            </span>
+          </div>
+
+          <!-- 聊天室訊息流 -->
+          <div id="chat-area" class="p-3.5 sm:p-4 space-y-3 bg-[#e2e8f0]/60 max-h-[540px] overflow-y-auto">
+            <!-- 訊息 1：群友 A 發言（誘導出金＋盜用頭貼破綻） -->
+            <div class="flex items-start gap-2.5">
+              <div id="clue-1" data-clue-id="1" class="clue-hotspot shrink-0 p-1" title="點選檢查頭貼細節">
+                <div class="w-10 h-10 rounded-full bg-[#fbcfe8] border-2 border-[#f472b6] flex items-center justify-center text-lg">
+                  👩‍💼
+                </div>
+                <span class="block text-[9px] text-center text-[#be185d] font-bold mt-0.5">陳小姐</span>
+              </div>
+              <div class="bg-white rounded-2xl rounded-tl-none p-3 shadow-sm border border-[#e2e8f0] max-w-[85%]">
+                <div class="text-[11px] font-bold text-[#64748b] mb-1">陳小姐（新北） ・ 23:41</div>
+                <p id="clue-4a" data-clue-id="4" class="clue-hotspot p-1 text-xs sm:text-sm text-[#1e293b] leading-relaxed">
+                  「天啊！我上週才拿打工存的 3 萬試水溫，跟著老師布局三天就翻倍，剛剛申請提領 10 分鐘就入帳了，終於可以買夢寐以求的新手機！」
+                </p>
+              </div>
+            </div>
+
+            <!-- 干擾誘導訊息 A：群友附和起鬨 -->
+            <div class="flex items-start gap-2.5">
+              <div class="w-10 h-10 rounded-full bg-[#dbeafe] border-2 border-[#60a5fa] flex items-center justify-center text-lg shrink-0">
+                🧑‍💻
+              </div>
+              <div class="bg-white rounded-2xl rounded-tl-none p-3 shadow-sm border border-[#e2e8f0] max-w-[85%]">
+                <div class="text-[11px] font-bold text-[#2563eb] mb-1">阿豪（台中） ・ 23:41</div>
+                <p class="text-xs sm:text-sm text-[#334155] leading-relaxed">
+                  「+1！我上個月還在跑外送還債，自從進了林老師VIP群，現在每天看盤喝咖啡賺的比正職還多，謝謝老師帶我翻身🙏」
+                </p>
+              </div>
+            </div>
+
+            <!-- 訊息 2：核心證據「獲利對帳單截圖」 -->
+            <div class="flex items-start gap-2.5">
+              <div class="w-10 h-10 rounded-full bg-[#fde68a] border-2 border-[#f59e0b] flex items-center justify-center text-lg shrink-0">
+                🤵
+              </div>
+              <div class="bg-white rounded-2xl rounded-tl-none p-3 shadow-sm border border-[#cbd5e1] w-full">
+                <div class="text-[11px] font-bold text-[#b45309] mb-1.5">王大明（金牌學員） ・ 23:42</div>
+
+                <!-- 模擬修圖獲利截圖卡片 -->
+                <div class="bg-[#0f172a] text-white rounded-2xl p-3.5 border-2 border-[#334155] space-y-2.5">
+                  <div class="flex items-center justify-between border-b border-slate-700 pb-2">
+                    <span class="text-xs font-bold text-slate-300">📊 證券成交獲利明細</span>
+                    <!-- 破綻 2：未來成交日期 -->
+                    <span id="clue-2" data-clue-id="2" class="clue-hotspot px-2 py-0.5 text-[11px] font-mono text-amber-300 bg-slate-800">
+                      成交日期：2028/13/45 25:61
+                    </span>
+                  </div>
+
+                  <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div class="bg-slate-800/80 p-2 rounded-xl">
+                      <div class="text-slate-400 text-[10px]">投入本金 (TWD)</div>
+                      <div class="font-bold text-slate-200 mt-0.5">$ 100,000</div>
+                    </div>
+                    <!-- 破綻 3：字體拼貼與不合理超高報酬 -->
+                    <div id="clue-3" data-clue-id="3" class="clue-hotspot bg-slate-800/80 p-2">
+                      <div class="text-slate-400 text-[10px]">今日實現淨賺</div>
+                      <div class="mt-0.5">
+                        <span class="font-serif italic text-base sm:text-lg text-[#4ade80] font-black tracking-widest">+$980,000</span>
+                        <span class="block text-[10px] text-[#f87171] font-bold">(單日獲利 +980%)</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="text-[10px] text-slate-400 flex justify-between items-center pt-1">
+                    <span>系統狀態：已入帳</span>
+                    <span class="text-emerald-400">★ 內部專屬通道</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 訊息 3：群友 B 發言（與群友 A 同一張頭貼＋腳本式假出金誘導） -->
+            <div class="flex items-start gap-2.5">
+              <div id="clue-1b" data-clue-id="1" class="clue-hotspot shrink-0 p-1" title="點選檢查頭貼細節">
+                <div class="w-10 h-10 rounded-full bg-[#fbcfe8] border-2 border-[#f472b6] flex items-center justify-center text-lg">
+                  👩‍💼
+                </div>
+                <span class="block text-[9px] text-center text-[#be185d] font-bold mt-0.5">張先生</span>
+              </div>
+              <div class="bg-white rounded-2xl rounded-tl-none p-3 shadow-sm border border-[#e2e8f0] max-w-[85%]">
+                <div class="text-[11px] font-bold text-[#64748b] mb-1">張先生（高雄） ・ 23:42</div>
+                <p id="clue-4b" data-clue-id="4" class="clue-hotspot p-1 text-xs sm:text-sm text-[#1e293b] leading-relaxed">
+                  「剛進群的新同學別猶豫了！我一開始也怕被騙只敢跟單一點點，結果今天早上順利領出 15 萬獲利，剛剛又加碼跟上明天的主力單了！」
+                </p>
+              </div>
+            </div>
+
+            <!-- 干擾誘導訊息 B：製造搶名額恐慌 -->
+            <div class="flex items-start gap-2.5">
+              <div class="w-10 h-10 rounded-full bg-[#dcfce7] border-2 border-[#34d399] flex items-center justify-center text-lg shrink-0">
+                👩
+              </div>
+              <div class="bg-white rounded-2xl rounded-tl-none p-3 shadow-sm border border-[#e2e8f0] max-w-[85%]">
+                <div class="text-[11px] font-bold text-[#059669] mb-1">宜靜（桃園） ・ 23:43</div>
+                <p class="text-xs sm:text-sm text-[#334155] leading-relaxed">
+                  「助教請問明天早盤的 VIP 內線名額還有嗎？我剛已經把資金準備好了，拜託幫我留一個位置！😭」
+                </p>
+              </div>
+            </div>
+
+            <!-- 訊息 4：助教置頂廣告條（違法保證獲利） -->
+            <div class="bg-[#fffbeb] border-2 border-[#fcd34d] rounded-2xl p-3">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs font-black text-[#b45309]">📣 群組助教｜小雅</span>
+                <span class="text-[10px] bg-[#fef3c7] text-[#92400e] px-2 py-0.5 rounded-full font-bold">置頂消息</span>
+              </div>
+              <p id="clue-5" data-clue-id="5" class="clue-hotspot p-1.5 text-xs sm:text-sm text-[#78350f] font-medium">
+                想跟上明天主力飆股的同學請私訊我！老師親自帶單，<span class="underline decoration-red-500 decoration-2 font-black text-[#dc2626]">保證100%穩賺不賠、零風險高報酬</span>，名額只剩最後 2 位！
+              </p>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- 右側：阿哲的防詐觀察筆記與操作區 (佔 5 欄) -->
+        <aside class="lg:col-span-5 bg-white border-2 border-[#e2e8f0] rounded-3xl p-4 sm:p-5 pastel-card flex flex-col justify-between min-h-[460px]">
+          <div>
+            <div class="flex items-center justify-between border-b border-[#f1f5f9] pb-3 mb-3">
+              <h2 class="font-black text-base sm:text-lg text-[#1e293b] flex items-center gap-2">
+                <span>🕵️‍♂️</span> 阿哲的防詐觀察筆記
+              </h2>
+              <button id="hint-btn" type="button" class="bg-[#ede9fe] hover:bg-[#ddd6fe] text-[#5b21b6] text-xs font-bold px-3 py-1.5 rounded-xl transition active:scale-95">
+                💡 提示 (<span id="hint-count">2</span>)
+              </button>
+            </div>
+
+            <!-- 即時系統回饋訊息框 -->
+            <div id="feedback-banner" class="bg-[#f8fafc] border border-[#cbd5e1] text-[#334155] text-xs sm:text-sm rounded-2xl p-3 mb-3 transition-all">
+              👆 <strong>操作提示：</strong>請在左側手機聊天室中，直接<strong>點擊</strong>你覺得可疑的頭貼、截圖數字或對話文字！
+            </div>
+
+            <!-- 已搜集到的破綻清單 -->
+            <div id="found-list" class="space-y-2.5 max-h-[340px] overflow-y-auto pr-1">
+              <div id="empty-placeholder" class="text-center py-8 px-4 bg-[#f8fafc] rounded-2xl border border-dashed border-[#cbd5e1] text-xs text-[#64748b]">
+                尚未揪出任何造假破綻。<br />
+                仔細看看對帳單日期、報酬率、群友頭貼與助教承諾！
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-[#f1f5f9] flex items-center justify-between gap-2">
+            <span class="text-[11px] text-[#94a3b8]">誤點正常訊息會扣除 15% 理智防線</span>
+            <button id="restart-btn" type="button" class="bg-[#f1f5f9] hover:bg-[#e2e8f0] text-[#334155] text-xs font-bold px-3.5 py-2 rounded-xl transition active:scale-95">
+              ↻ 重新開始
+            </button>
+          </div>
+        </aside>
+
+      </main>
+    </div>
+
+    <!-- ==================== 第二關區塊：話術拆彈 ==================== -->
+    <div id="level-2-wrapper" class="hidden">
+      <!-- 第二關頂部劇情與狀態儀表板 -->
+      <header class="bg-[#fdf2f8] border-2 border-[#fbcfe8] rounded-3xl p-4 sm:p-5 mb-4 pastel-card">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div>
+            <div class="inline-flex items-center gap-2 bg-[#fce7f3] text-[#be185d] text-xs font-bold px-3 py-1 rounded-full mb-1.5">
+              <span class="w-2 h-2 rounded-full bg-[#ec4899] pulse-soft"></span>
+              第二關｜決策背景圖狀態 1 → 助教一對一私訊猛攻
+            </div>
+            <h1 class="text-xl sm:text-2xl font-black text-[#1e293b]">話術拆彈：穩賺不賠與飢餓行銷</h1>
+            <p class="text-xs sm:text-sm text-[#475569] mt-0.5">
+              群組剛被看穿，助教立刻私訊施壓！請在倒數結束前，為助教的 <span class="font-bold text-[#be185d]">4 波心理戰話術</span> 舉起正確的 <span class="font-bold text-[#2563eb]">反詐拆解盾牌</span>！
+            </p>
+          </div>
+
+          <!-- 第二關儀表板 -->
+          <div class="flex flex-wrap items-center gap-2 sm:gap-3 shrink-0">
+            <div class="bg-white border border-[#fbcfe8] rounded-2xl px-3.5 py-2 text-center min-w-[84px]">
+              <div class="text-[11px] font-bold text-[#9d174d]">已拆話術</div>
+              <div class="text-lg sm:text-xl font-black text-[#db2777]">
+                <span id="lv2-defused-count">0</span> / 4
+              </div>
+            </div>
+
+            <div class="bg-white border border-[#fbcfe8] rounded-2xl px-3.5 py-2 text-center min-w-[84px]">
+              <div class="text-[11px] font-bold text-[#9d174d]">逼單倒數</div>
+              <div id="lv2-timer-display" class="text-lg sm:text-xl font-black text-[#0f172a]">15s</div>
+            </div>
+
+            <div class="bg-[#eff6ff] border border-[#bfdbfe] rounded-2xl px-3.5 py-2 min-w-[125px]">
+              <div class="flex justify-between text-[11px] font-bold text-[#1d4ed8] mb-1">
+                <span>阿哲理智防線</span>
+                <span id="lv2-sanity-text">100%</span>
+              </div>
+              <div class="w-full h-2.5 bg-[#dbeafe] rounded-full overflow-hidden">
+                <div id="lv2-sanity-bar" class="h-full bg-gradient-to-r from-[#60a5fa] to-[#2563eb] rounded-full transition-all duration-300" style="width: 100%;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- 第二關主互動舞台 -->
+      <main class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+
+        <!-- 左側：助教私訊心理戰視窗 (佔 7 欄) -->
+        <section id="lv2-phone-box" class="lg:col-span-7 bg-[#f8fafc] border-4 border-[#334155] rounded-[2rem] overflow-hidden pastel-card">
+          <!-- 私訊頂部列 -->
+          <div class="bg-[#1e293b] text-white px-5 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-[#ec4899] to-[#f472b6] flex items-center justify-center text-white font-black text-sm">
+                雅
+              </div>
+              <div>
+                <div class="font-bold text-sm sm:text-base">金牌助教｜小雅（一對一私訊）</div>
+                <div class="text-[11px] text-pink-300">⚠️ 狀態 1：群組已標記造假，助教改用私訊施壓</div>
+              </div>
+            </div>
+            <span class="bg-[#f43f5e] text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full pulse-soft">
+              正在輸入訊息...
+            </span>
+          </div>
+
+          <!-- 助教話術飛彈區與盾牌選擇區 -->
+          <div class="p-4 sm:p-5 bg-[#fdf2f8]/60 space-y-4">
+            <!-- 劇情過渡提示 -->
+            <div class="bg-white/90 border border-[#fbcfe8] rounded-2xl p-3 text-xs text-[#64748b]">
+              💬 <strong>阿哲內心掙扎：</strong>「雖然剛才發現群組截圖很假，但助教私訊說虧損算公司的、而且只剩最後幾分鐘……我要不要信這一次？」
+            </div>
+
+            <!-- 當前飛來的助教話術卡片 -->
+            <div id="lv2-threat-card" class="speech-card-anim bg-white border-2 border-[#f43f5e] rounded-3xl p-4 sm:p-5 shadow-md relative">
+              <div class="flex items-center justify-between mb-2">
+                <span id="lv2-wave-badge" class="bg-[#ffe4e6] text-[#be123c] text-[11px] font-black px-2.5 py-0.5 rounded-full">
+                  第 1 波話術攻勢
+                </span>
+                <span id="lv2-tactic-tag" class="text-[11px] font-bold text-[#94a3b8]">類型：高報酬零風險誘餌</span>
+              </div>
+              <p id="lv2-threat-text" class="text-sm sm:text-base font-bold text-[#1e293b] leading-relaxed">
+                「同學別看群組了，老師特別幫學生爭取保底名額！只要現在入金，虧損算公司的、賺錢全歸你，保證穩賺不賠！」
+              </p>
+            </div>
+
+            <!-- 三面反詐拆解盾牌按鈕 -->
+            <div>
+              <div class="text-xs font-extrabold text-[#334155] mb-2 flex items-center gap-1.5">
+                <span>🛡️</span> 選擇正確的「反詐拆解盾牌」擊碎這句話術：
+              </div>
+              <div id="lv2-shields-container" class="grid grid-cols-1 gap-2.5">
+                <!-- 由 JS 動態生成 3 個盾牌按鈕 -->
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 右側：話術封條紀錄與拆解解析 (佔 5 欄) -->
+        <aside class="lg:col-span-5 bg-white border-2 border-[#e2e8f0] rounded-3xl p-4 sm:p-5 pastel-card flex flex-col justify-between min-h-[440px]">
+          <div>
+            <div class="flex items-center justify-between border-b border-[#f1f5f9] pb-3 mb-3">
+              <h2 class="font-black text-base sm:text-lg text-[#1e293b] flex items-center gap-2">
+                <span>🏷️</span> 助教話術拆解封條
+              </h2>
+              <span class="text-xs font-semibold text-[#db2777]">決策背景圖推進</span>
+            </div>
+
+            <!-- 即時回饋橫幅 -->
+            <div id="lv2-feedback-banner" class="bg-[#f8fafc] border border-[#cbd5e1] text-[#334155] text-xs sm:text-sm rounded-2xl p-3 mb-3 transition-all">
+              🛡️ <strong>防守提示：</strong>看穿助教話術背後的心理操控邏輯，點擊下方對應盾牌即可貼上封條！
+            </div>
+
+            <!-- 已拆解話術清單 -->
+            <div id="lv2-defused-list" class="space-y-2.5 max-h-[340px] overflow-y-auto pr-1">
+              <div id="lv2-empty-placeholder" class="text-center py-8 px-4 bg-[#f8fafc] rounded-2xl border border-dashed border-[#cbd5e1] text-xs text-[#64748b]">
+                尚未貼上任何話術封條。<br />
+                助教正試圖用「保證獲利」與「限時倒數」讓你失去冷靜！
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-[#f1f5f9] flex items-center justify-between gap-2">
+            <span class="text-[11px] text-[#94a3b8]">選錯盾牌或超時會扣 20% 理智防線</span>
+            <button id="lv2-restart-btn" type="button" class="bg-[#f1f5f9] hover:bg-[#e2e8f0] text-[#334155] text-xs font-bold px-3.5 py-2 rounded-xl transition active:scale-95">
+              ↻ 重新挑戰本關
+            </button>
+          </div>
+        </aside>
+
+      </main>
+    </div>
+
+    <!-- ==================== 第三關區塊：資金流向大考驗 ==================== -->
+    <div id="level-3-wrapper" class="hidden">
+      <!-- 第三關頂部劇情與狀態儀表板 -->
+      <header class="bg-[#ecfdf5] border-2 border-[#a7f3d0] rounded-3xl p-4 sm:p-5 mb-4 pastel-card">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div>
+            <div class="inline-flex items-center gap-2 bg-[#d1fae5] text-[#065f46] text-xs font-bold px-3 py-1 rounded-full mb-1.5">
+              <span class="w-2 h-2 rounded-full bg-[#10b981] pulse-soft"></span>
+              第三關｜決策背景圖狀態 2 → 停在「輸入轉帳金額」頁面
+            </div>
+            <h1 class="text-xl sm:text-2xl font-black text-[#1e293b]">資金流向大考驗：守住最後一道防線</h1>
+            <p class="text-xs sm:text-sm text-[#475569] mt-0.5">
+              阿哲的大拇指正懸在「轉出 3,000 元」上方！請連續完成 <span class="font-bold text-[#047857]">3 道關鍵查證決策</span>，徹底鎖死詐騙金流！
+            </p>
+          </div>
+
+          <!-- 第三關儀表板 -->
+          <div class="flex flex-wrap items-center gap-2 sm:gap-3 shrink-0">
+            <div class="bg-white border border-[#a7f3d0] rounded-2xl px-3.5 py-2 text-center min-w-[92px]">
+              <div class="text-[11px] font-bold text-[#047857]">防線驗證</div>
+              <div class="text-lg sm:text-xl font-black text-[#065f46]">
+                <span id="lv3-step-count">0</span> / 3
+              </div>
+            </div>
+
+            <div class="bg-[#eff6ff] border border-[#bfdbfe] rounded-2xl px-3.5 py-2 min-w-[130px]">
+              <div class="flex justify-between text-[11px] font-bold text-[#1d4ed8] mb-1">
+                <span>阿哲存款安全值</span>
+                <span id="lv3-sanity-text">100%</span>
+              </div>
+              <div class="w-full h-2.5 bg-[#dbeafe] rounded-full overflow-hidden">
+                <div id="lv3-sanity-bar" class="h-full bg-gradient-to-r from-[#10b981] to-[#059669] rounded-full transition-all duration-300" style="width: 100%;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- 第三關主互動舞台 -->
+      <main class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+
+        <!-- 左側：網銀「輸入轉帳金額」最後決策視窗 (佔 7 欄) -->
+        <section id="lv3-phone-box" class="lg:col-span-7 bg-[#f8fafc] border-4 border-[#334155] rounded-[2rem] overflow-hidden pastel-card">
+          <!-- 手機頂部狀態列 -->
+          <div class="bg-[#1e293b] text-white px-5 py-2.5 flex items-center justify-between text-xs">
+            <span class="font-bold">23:47 行動銀行轉帳確認頁</span>
+            <span class="bg-[#dbeafe] text-[#1e40af] text-[10px] font-bold px-2 py-0.5 rounded-full">
+              狀態 2：群組與話術皆已標記
+            </span>
+          </div>
+
+          <!-- 網銀轉帳模擬畫面 -->
+          <div class="p-4 sm:p-5 bg-[#f1f5f9] space-y-4">
+            <!-- 收款帳戶與金額欄位卡片 -->
+            <div class="bg-white border-2 border-[#cbd5e1] rounded-3xl p-4 shadow-sm space-y-3">
+              <div class="flex items-center justify-between border-b border-[#f1f5f9] pb-2">
+                <span class="text-xs font-extrabold text-[#334155]">🏦 即時轉帳交易確認</span>
+                <span id="lv3-lock-badge" class="text-[11px] font-bold bg-[#fef3c7] text-[#92400e] px-2.5 py-0.5 rounded-full">
+                  ⚠️ 待確認轉出
+                </span>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                <div class="bg-[#f8fafc] p-2.5 rounded-2xl border border-[#e2e8f0]">
+                  <div class="text-[10px] text-[#64748b]">收款帳號性質</div>
+                  <div class="font-bold text-[#dc2626] mt-0.5">822-0918-XXXX-882（個人戶名：王○明）</div>
+                </div>
+                <div class="bg-[#f8fafc] p-2.5 rounded-2xl border border-[#e2e8f0]">
+                  <div class="text-[10px] text-[#64748b]">輸入轉帳金額（TWD）</div>
+                  <div class="font-black text-base text-[#0f172a] mt-0.5 flex items-center gap-1">
+                    NT$ 3,000 <span class="inline-block w-0.5 h-4 bg-[#2563eb] pulse-soft"></span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 當前步驟劇情獨白 -->
+              <div id="lv3-story-prompt" class="bg-[#fffbeb] border border-[#fde68a] rounded-2xl p-3 text-xs sm:text-sm text-[#78350f] leading-relaxed">
+                💭 <strong>阿哲最後的動搖：</strong>「雖然知道群組跟助教都很可疑，但萬一真的只有這次例外呢？不然我先轉 3,000 元試試水溫，就算被騙也還好吧？」
+              </div>
+            </div>
+
+            <!-- 當前決策題目與三個行動選項 -->
+            <div id="lv3-question-card" class="speech-card-anim bg-white border-2 border-[#6ee7b7] rounded-3xl p-4 sm:p-5 shadow-sm">
+              <div class="flex items-center justify-between mb-2">
+                <span id="lv3-q-badge" class="bg-[#059669] text-white text-[11px] font-black px-2.5 py-0.5 rounded-full">
+                  關卡考驗 1 / 3
+                </span>
+                <span id="lv3-q-topic" class="text-xs font-bold text-[#047857]">破除「先轉小額試水溫」迷思</span>
+              </div>
+
+              <h3 id="lv3-q-title" class="text-sm sm:text-base font-black text-[#1e293b] mb-3">
+                面對「先轉 3,000 元試水溫」的僥倖心理，阿哲此刻最該怎麼做？
+              </h3>
+
+              <div id="lv3-options-container" class="space-y-2.5">
+                <!-- 由 JS 動態生成 3 個選項 -->
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 右側：金流查證安全日誌 (佔 5 欄) -->
+        <aside class="lg:col-span-5 bg-white border-2 border-[#e2e8f0] rounded-3xl p-4 sm:p-5 pastel-card flex flex-col justify-between min-h-[440px]">
+          <div>
+            <div class="flex items-center justify-between border-b border-[#f1f5f9] pb-3 mb-3">
+              <h2 class="font-black text-base sm:text-lg text-[#1e293b] flex items-center gap-2">
+                <span>🔐</span> 最後一道防線查證日誌
+              </h2>
+              <span class="text-xs font-semibold text-[#059669]">守住轉帳鍵</span>
+            </div>
+
+            <!-- 即時回饋橫幅 -->
+            <div id="lv3-feedback-banner" class="bg-[#ecfdf5] border border-[#a7f3d0] text-[#065f46] text-xs sm:text-sm rounded-2xl p-3 mb-3 transition-all">
+              💡 <strong>關鍵提醒：</strong>一旦按下「確認轉出」，資金就會瞬間流向人頭帳戶！請幫阿哲做出最冷靜的防詐行動。
+            </div>
+
+            <!-- 已完成防線驗證紀錄 -->
+            <div id="lv3-verified-log" class="space-y-2.5 max-h-[340px] overflow-y-auto pr-1">
+              <div id="lv3-empty-placeholder" class="text-center py-8 px-4 bg-[#f8fafc] rounded-2xl border border-dashed border-[#cbd5e1] text-xs text-[#64748b]">
+                尚未完成任何金流查證步驟。<br />
+                幫阿哲看穿「先轉小額試水溫」與「個人人頭帳戶」的真相！
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-[#f1f5f9] flex items-center justify-between gap-2">
+            <span class="text-[11px] text-[#94a3b8]">誤選危險動作會扣除 35% 存款安全值</span>
+            <button id="lv3-restart-btn" type="button" class="bg-[#f1f5f9] hover:bg-[#e2e8f0] text-[#334155] text-xs font-bold px-3.5 py-2 rounded-xl transition active:scale-95">
+              ↻ 重新挑戰本關
+            </button>
+          </div>
+        </aside>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- 過關停駐檢視浮動操作列（當玩家選擇留在畫面檢視 60 秒時顯示） -->
+  <div id="stay-review-bar" class="fixed bottom-4 left-1/2 -translate-x-1/2 w-[94%] max-w-2xl bg-[#0f172a]/95 border-2 border-[#f59e0b] text-white rounded-2xl px-4 py-3 shadow-2xl hidden items-center justify-between gap-3 z-40">
+    <div class="flex items-center gap-2.5 text-xs sm:text-sm">
+      <span class="text-lg">🔍</span>
+      <div>
+        <div class="font-bold text-amber-300">已過關！正在停留檢視本關畫面</div>
+        <div class="text-[11px] text-slate-300">將於 <span id="stay-countdown-text" class="font-black text-white">60</span> 秒後自動跳轉，或隨時自行選擇：</div>
+      </div>
+    </div>
+    <div class="flex items-center gap-2 shrink-0">
+      <button id="stay-replay-btn" type="button" class="bg-slate-700 hover:bg-slate-600 text-white font-bold px-3 py-2 rounded-xl text-xs transition">
+        ↻ 重新挑戰
+      </button>
+      <button id="stay-next-btn" type="button" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-3.5 py-2 rounded-xl text-xs transition shadow">
+        直接下一關 →
+      </button>
+    </div>
+  </div>
+
+  <!-- 過關 / 失敗 / 鎖定提示彈窗（取代 alert） -->
+  <div id="result-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-white border-2 border-[#fde68a] rounded-3xl max-w-md w-full p-6 text-center pastel-card">
+      <div id="modal-icon" class="w-16 h-16 mx-auto rounded-2xl bg-[#fef3c7] flex items-center justify-center text-3xl mb-3">
+        🎉
+      </div>
+      <h3 id="modal-title" class="text-xl font-black text-[#1e293b] mb-2">第一關過關！</h3>
+      <p id="modal-desc" class="text-sm text-[#475569] leading-relaxed mb-4">
+        阿哲看穿了群組獲利截圖的造假破綻！決策背景圖上的群組氣泡已標記為「疑似樁腳與修圖假造」。
+      </p>
+      <div id="story-bridge-box" class="bg-[#fffbeb] border border-[#fde68a] rounded-2xl p-3 text-left text-xs text-[#78350f] mb-5 space-y-1">
+        <div class="font-bold text-[#b45309]">📌 決策背景圖更新（狀態 1）：</div>
+        <div>群組已失去可信度，但就在這時，助教傳來一對一私訊：「同學要不要一起賺？保證穩賺不賠，錯過這檔就沒機會了哦！」……</div>
+      </div>
+      <div class="flex flex-col gap-2">
+        <button id="modal-stay-btn" type="button" class="w-full bg-[#fef3c7] hover:bg-[#fde68a] text-[#92400e] border border-[#fcd34d] font-bold py-2.5 px-4 rounded-xl text-xs sm:text-sm transition">
+          🔍 留在同畫面檢視細節（1 分鐘倒數）
+        </button>
+        <div class="flex flex-col sm:flex-row gap-2">
+          <button id="modal-replay-btn" type="button" class="flex-1 bg-[#f1f5f9] hover:bg-[#e2e8f0] text-[#334155] font-bold py-2.5 px-4 rounded-xl text-sm transition">
+            ↻ 重新挑戰本關
+          </button>
+          <button id="modal-next-btn" type="button" class="flex-1 bg-[#f59e0b] hover:bg-[#d97706] text-white font-bold py-2.5 px-4 rounded-xl text-sm transition shadow-md">
+            直接進入下一關 →
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 第一關破綻資料庫（共 5 個獨立破綻）
+    const CLUES_DATA = {
+      1: {
+        title: '破綻 ①｜不同成員卻盜用同一張頭貼',
+        desc: '「陳小姐」與「張先生」性別、姓名與居住地完全不同，卻使用一模一樣的女性商務頭貼，這是詐騙集團一人分飾多角的「樁腳群組」典型特徵！',
+        elements: ['clue-1', 'clue-1b']
+      },
+      2: {
+        title: '破綻 ②｜不可能存在的未來成交時間',
+        desc: '對帳單上顯示「2028/13/45 25:61」，不僅年份在未來，連月份（13月）、日期（45日）與時間（25:61）都是亂填的修圖產物。',
+        elements: ['clue-2']
+      },
+      3: {
+        title: '破綻 ③｜字體拼貼與單日暴賺 980%',
+        desc: '獲利數字「+$980,000」字體風格與券商系統格格不入，且台股有漲跌幅限制，根本不可能單日暴賺 980%。',
+        elements: ['clue-3']
+      },
+      4: {
+        title: '破綻 ④｜統一劇本的「小額試水溫＋秒出金」誘導話術',
+        desc: '兩位樁腳輪流鼓吹「先拿小錢試水溫、幾分鐘就順利提領出金」，這是專門用來卸下新手戒心的假出金劇本！',
+        elements: ['clue-4a', 'clue-4b']
+      },
+      5: {
+        title: '破綻 ⑤｜違法宣稱「100% 穩賺不賠」',
+        desc: '任何合法金融投資皆有風險，凡是標榜「保證穩賺不賠、零風險高報酬」且用名額倒數逼單的話術，100% 是投資詐騙。',
+        elements: ['clue-5']
+      }
+    };
+
+    // 遊戲狀態變數
+    let foundClues = new Set();
+    let sanity = 100;
+    let timeLeft = 60;
+    let hintsLeft = 2;
+    let timerInterval = null;
+    let isGameOver = false;
+
+    // 過關停留 1 分鐘倒數控制
+    let stayReviewInterval = null;
+    let staySecondsLeft = 60;
+
+    // 嚴格關卡完成與解鎖進度狀態（必須第一關真正通關才解鎖第二關，第二關真正通關才解鎖第三關）
+    let level1Completed = false;
+    let level2Completed = false;
+    let unlockedLevel = 1;
+
+    // DOM 元素參照
+    const foundCountEl = document.getElementById('found-count');
+    const timerDisplayEl = document.getElementById('timer-display');
+    const sanityTextEl = document.getElementById('sanity-text');
+    const sanityBarEl = document.getElementById('sanity-bar');
+    const feedbackBannerEl = document.getElementById('feedback-banner');
+    const foundListEl = document.getElementById('found-list');
+    const emptyPlaceholderEl = document.getElementById('empty-placeholder');
+    const hintBtnEl = document.getElementById('hint-btn');
+    const hintCountEl = document.getElementById('hint-count');
+    const phoneScreenEl = document.getElementById('phone-screen');
+    const resultModalEl = document.getElementById('result-modal');
+    const stayReviewBarEl = document.getElementById('stay-review-bar');
+    const stayCountdownTextEl = document.getElementById('stay-countdown-text');
+
+    // 清除過關停留 1 分鐘計時器與浮動列
+    function clearStayReviewTimer() {
+      clearInterval(stayReviewInterval);
+      stayReviewBarEl.classList.add('hidden');
+      stayReviewBarEl.classList.remove('flex');
+    }
+
+    // 啟動過關停留同畫面 1 分鐘倒數（可隨時自行選擇下一關或重新挑戰）
+    function startStayReviewMode({ onReplay, onNext, nextLabel = '直接下一關 →' }) {
+      clearStayReviewTimer();
+      resultModalEl.classList.add('hidden');
+      resultModalEl.classList.remove('flex');
+
+      staySecondsLeft = 60;
+      stayCountdownTextEl.textContent = staySecondsLeft;
+
+      const stayReplayBtn = document.getElementById('stay-replay-btn');
+      const stayNextBtn = document.getElementById('stay-next-btn');
+      stayNextBtn.textContent = nextLabel;
+
+      stayReplayBtn.onclick = () => {
+        clearStayReviewTimer();
+        onReplay();
+      };
+      stayNextBtn.onclick = () => {
+        clearStayReviewTimer();
+        onNext();
+      };
+
+      stayReviewBarEl.classList.remove('hidden');
+      stayReviewBarEl.classList.add('flex');
+
+      stayReviewInterval = setInterval(() => {
+        staySecondsLeft--;
+        stayCountdownTextEl.textContent = staySecondsLeft;
+        if (staySecondsLeft <= 0) {
+          clearStayReviewTimer();
+          onNext();
+        }
+      }, 1000);
+    }
+
+    // 初始化 / 重置第一關
+    function initGame() {
+      clearStayReviewTimer();
+      foundClues.clear();
+      sanity = 100;
+      timeLeft = 60;
+      hintsLeft = 2;
+      isGameOver = false;
+
+      // 重置 UI 數字
+      foundCountEl.textContent = '0';
+      timerDisplayEl.textContent = '60s';
+      timerDisplayEl.className = 'text-lg sm:text-xl font-black text-[#0f172a]';
+      sanityTextEl.textContent = '100%';
+      sanityBarEl.style.width = '100%';
+      hintCountEl.textContent = '2';
+      hintBtnEl.disabled = false;
+      hintBtnEl.classList.remove('opacity-50', 'cursor-not-allowed');
+
+      // 清除所有破綻標記樣式
+      document.querySelectorAll('.clue-hotspot').forEach(el => {
+        el.classList.remove('clue-found', 'ring-4', 'ring-amber-400');
+      });
+
+      // 重置右側筆記區
+      foundListEl.innerHTML = '';
+      foundListEl.appendChild(emptyPlaceholderEl);
+      emptyPlaceholderEl.classList.remove('hidden');
+
+      feedbackBannerEl.className = 'bg-[#f8fafc] border border-[#cbd5e1] text-[#334155] text-xs sm:text-sm rounded-2xl p-3 mb-3 transition-all';
+      feedbackBannerEl.innerHTML = '👆 <strong>操作提示：</strong>請在左側手機聊天室中，直接<strong>點擊</strong>你覺得可疑的頭貼、截圖數字或對話文字！';
+
+      resultModalEl.classList.add('hidden');
+      resultModalEl.classList.remove('flex');
+
+      // 啟動倒數計時器
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        if (isGameOver) return;
+        timeLeft--;
+        timerDisplayEl.textContent = `${timeLeft}s`;
+        if (timeLeft <= 15) {
+          timerDisplayEl.className = 'text-lg sm:text-xl font-black text-[#dc2626] pulse-soft';
+        }
+        if (timeLeft <= 0) {
+          endGame(false, '時間到！阿哲在群組狂熱氣氛的催促下差點失去冷靜，差一點就點進轉帳頁面了！');
+        }
+      }, 1000);
+    }
+
+    // 處理玩家點擊破綻熱區
+    function handleClueClick(clueId) {
+      if (isGameOver) return;
+      const clue = CLUES_DATA[clueId];
+      if (!clue) return;
+
+      if (foundClues.has(clueId)) {
+        feedbackBannerEl.className = 'bg-[#fffbeb] border border-[#fde68a] text-[#92400e] text-xs sm:text-sm rounded-2xl p-3 mb-3 transition-all';
+        feedbackBannerEl.innerHTML = `ℹ️ 你已經揪出「<strong>${clue.title}</strong>」了，繼續尋找其他破綻吧！`;
+        return;
+      }
+
+      // 標記已找到
+      foundClues.add(clueId);
+      clue.elements.forEach(elId => {
+        const el = document.getElementById(elId);
+        if (el) {
+          el.classList.remove('ring-4', 'ring-amber-400');
+          el.classList.add('clue-found');
+        }
+      });
+
+      // 更新計數與回饋
+      foundCountEl.textContent = foundClues.size;
+      feedbackBannerEl.className = 'bg-[#ecfdf5] border border-[#6ee7b7] text-[#065f46] text-xs sm:text-sm rounded-2xl p-3 mb-3 transition-all font-medium';
+      feedbackBannerEl.innerHTML = `✅ <strong>揪出破綻！</strong>${clue.title}`;
+
+      // 新增至右側筆記區
+      emptyPlaceholderEl.classList.add('hidden');
+      const noteCard = document.createElement('div');
+      noteCard.className = 'bg-[#fef2f2] border border-[#fecaca] rounded-2xl p-3 text-xs transition-all';
+      noteCard.innerHTML = `
+        <div class="font-bold text-[#dc2626] mb-1">🚩 ${clue.title}</div>
+        <div class="text-[#334155] leading-relaxed">${clue.desc}</div>
+      `;
+      foundListEl.prepend(noteCard);
+
+      // 檢查是否找齊全部 5 個破綻
+      if (foundClues.size === Object.keys(CLUES_DATA).length) {
+        setTimeout(() => {
+          endGame(true);
+        }, 450);
+      }
+    }
+
+    // 處理誤點正常區域
+    function handleMisclick() {
+      if (isGameOver) return;
+      sanity = Math.max(0, sanity - 15);
+      sanityTextEl.textContent = `${sanity}%`;
+      sanityBarEl.style.width = `${sanity}%`;
+
+      if (sanity <= 40) {
+        sanityBarEl.className = 'h-full bg-gradient-to-r from-[#f87171] to-[#dc2626] rounded-full transition-all duration-300';
+      }
+
+      // 手機畫面晃動回饋
+      phoneScreenEl.classList.remove('shake-anim');
+      void phoneScreenEl.offsetWidth;
+      phoneScreenEl.classList.add('shake-anim');
+
+      feedbackBannerEl.className = 'bg-[#fef2f2] border border-[#fca5a5] text-[#991b1b] text-xs sm:text-sm rounded-2xl p-3 mb-3 transition-all';
+      feedbackBannerEl.innerHTML = '⚠️ <strong>這裡沒有明顯破綻！</strong>別被雜訊干擾，阿哲理智防線 -15%。';
+
+      if (sanity <= 0) {
+        endGame(false, '理智防線歸零！阿哲被群組熱烈的賺錢氣氛沖昏頭，決定先私訊助教了解詳情……');
+      }
+    }
+
+    // 使用提示功能
+    function useHint() {
+      if (isGameOver || hintsLeft <= 0) return;
+
+      const remainingIds = Object.keys(CLUES_DATA)
+        .map(Number)
+        .filter(id => !foundClues.has(id));
+
+      if (remainingIds.length === 0) return;
+
+      hintsLeft--;
+      hintCountEl.textContent = hintsLeft;
+      if (hintsLeft === 0) {
+        hintBtnEl.disabled = true;
+        hintBtnEl.classList.add('opacity-50', 'cursor-not-allowed');
+      }
+
+      const targetId = remainingIds[0];
+      const targetEl = document.getElementById(CLUES_DATA[targetId].elements[0]);
+      if (targetEl) {
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        targetEl.classList.add('ring-4', 'ring-amber-400');
+        feedbackBannerEl.className = 'bg-[#ede9fe] border border-[#c4b5fd] text-[#5b21b6] text-xs sm:text-sm rounded-2xl p-3 mb-3 transition-all';
+        feedbackBannerEl.innerHTML = '💡 <strong>提示已標出：</strong>看看手機畫面中閃爍黃框的可疑位置！';
+      }
+    }
+
+    // 結束第一關並顯示劇情銜接彈窗
+    function endGame(isWin, failReason = '') {
+      isGameOver = true;
+      clearInterval(timerInterval);
+
+      const modalIcon = document.getElementById('modal-icon');
+      const modalTitle = document.getElementById('modal-title');
+      const modalDesc = document.getElementById('modal-desc');
+      const storyBridgeBox = document.getElementById('story-bridge-box');
+      const modalStayBtn = document.getElementById('modal-stay-btn');
+      const modalNextBtn = document.getElementById('modal-next-btn');
+      const modalReplayBtn = document.getElementById('modal-replay-btn');
+
+      if (isWin) {
+        // 標記第一關真正完成並解鎖第二關
+        level1Completed = true;
+        unlockedLevel = Math.max(unlockedLevel, 2);
+        updateNavLockState(1);
+
+        modalIcon.textContent = '🎉';
+        modalIcon.className = 'w-16 h-16 mx-auto rounded-2xl bg-[#dcfce7] flex items-center justify-center text-3xl mb-3';
+        modalTitle.textContent = '第一關過關！已解鎖第二關';
+        modalDesc.textContent = '阿哲倒抽一口氣，看著群組裡一模一樣的樁腳發言與修圖對帳單，終於看穿「大家都在賺錢」全是一場演戲！';
+        storyBridgeBox.innerHTML = `
+          <div class="font-bold text-[#b45309]">📌 決策背景圖更新（狀態 1）：</div>
+          <div>左側「VIP 飆股群組」已標記為<strong>【疑似樁腳與修圖假造】</strong>。你可以選擇留在目前畫面細看 1 分鐘，或直接進入第二關面對助教的私訊逼單！</div>
+        `;
+        modalStayBtn.classList.remove('hidden');
+        modalStayBtn.onclick = () => {
+          startStayReviewMode({
+            onReplay: initGame,
+            onNext: startLevel2,
+            nextLabel: '直接進入第二關 →'
+          });
+        };
+        modalReplayBtn.textContent = '↻ 重新挑戰本關';
+        modalReplayBtn.onclick = initGame;
+        modalNextBtn.textContent = '直接進入第二關 →';
+        modalNextBtn.onclick = startLevel2;
+        modalNextBtn.classList.remove('hidden');
+      } else {
+        modalIcon.textContent = '😵';
+        modalIcon.className = 'w-16 h-16 mx-auto rounded-2xl bg-[#fee2e2] flex items-center justify-center text-3xl mb-3';
+        modalTitle.textContent = '差一點就上當了！';
+        modalDesc.textContent = failReason;
+        storyBridgeBox.innerHTML = `
+          <div class="font-bold text-[#991b1b]">🔍 防詐小提醒：</div>
+          <div>必須先在第一關答題成功，才能解鎖第二關劇情喔！點擊「重新挑戰本關」，幫阿哲找出全部 5 個破綻吧！</div>
+        `;
+        modalStayBtn.classList.add('hidden');
+        modalReplayBtn.textContent = '↻ 重新挑戰本關';
+        modalReplayBtn.onclick = initGame;
+        modalNextBtn.classList.add('hidden');
+      }
+
+      resultModalEl.classList.remove('hidden');
+      resultModalEl.classList.add('flex');
+    }
+
+    // 更新頂部導覽列關卡解鎖與高亮狀態
+    function updateNavLockState(activeLevel = 1) {
+      const btn1 = document.getElementById('nav-lv1');
+      const btn2 = document.getElementById('nav-lv2');
+      const btn3 = document.getElementById('nav-lv3');
+
+      // 第一關永遠解鎖
+      btn1.disabled = false;
+      btn1.textContent = '第一關：假截圖找碴';
+      btn1.className = activeLevel === 1
+        ? 'px-2.5 py-1 rounded-lg font-bold bg-amber-500 text-slate-900 transition'
+        : 'px-2.5 py-1 rounded-lg font-bold bg-slate-700 text-slate-200 hover:bg-slate-600 transition';
+
+      // 第二關依解鎖進度顯示（必須第一關完成）
+      if (level1Completed && unlockedLevel >= 2) {
+        btn2.disabled = false;
+        btn2.textContent = '第二關：話術拆彈';
+        btn2.className = activeLevel === 2
+          ? 'px-2.5 py-1 rounded-lg font-bold bg-pink-500 text-white transition'
+          : 'px-2.5 py-1 rounded-lg font-bold bg-slate-700 text-slate-200 hover:bg-slate-600 transition';
+      } else {
+        btn2.disabled = true;
+        btn2.textContent = '🔒 第二關：話術拆彈';
+        btn2.className = 'px-2.5 py-1 rounded-lg font-bold bg-slate-800 text-slate-500 cursor-not-allowed transition';
+      }
+
+      // 第三關依解鎖進度顯示（必須第一、二關皆完成）
+      if (level1Completed && level2Completed && unlockedLevel >= 3) {
+        btn3.disabled = false;
+        btn3.textContent = '第三關：資金防線';
+        btn3.className = activeLevel === 3
+          ? 'px-2.5 py-1 rounded-lg font-bold bg-emerald-500 text-slate-950 transition'
+          : 'px-2.5 py-1 rounded-lg font-bold bg-slate-700 text-slate-200 hover:bg-slate-600 transition';
+      } else {
+        btn3.disabled = true;
+        btn3.textContent = '🔒 第三關：資金防線';
+        btn3.className = 'px-2.5 py-1 rounded-lg font-bold bg-slate-800 text-slate-500 cursor-not-allowed transition';
+      }
+    }
+
+    // ==================== 第二關邏輯與資料：話術拆彈 ====================
+    const LEVEL2_WAVES = [
+      {
+        wave: '第 1 波話術攻勢',
+        tactic: '類型：假保底＋零風險高報酬誘餌',
+        speech: '「同學別看群組了，老師特別幫學生爭取保底名額！只要現在入金，虧損算公司的、賺錢全歸你，保證穩賺不賠！」',
+        correctIndex: 0,
+        stampTitle: '封條 ①｜戳破「保證穩賺不賠」假保底',
+        explanation: '合法投資必定伴隨市場波動風險，沒有任何機構會幫陌生人承擔虧損。「虧損算公司、賺錢歸你」是誘騙入金的典型假承諾。',
+        shields: [
+          '🛡️ 盾牌 A：違反投資風險常態！世上沒有「穩賺不賠」還幫你扛虧損的投資',
+          '🛡️ 盾牌 B：先問助教保底合約寫在哪，請他傳連結給我下載看看',
+          '🛡️ 盾牌 C：要求老師先幫我代墊本金，有賺錢再從獲利裡面扣'
+        ]
+      },
+      {
+        wave: '第 2 波話術攻勢',
+        tactic: '類型：飢餓行銷＋製造急迫感（FOMO）',
+        speech: '「資金通道再 3 分鐘就關閉了！你現在不把握，等明天開盤直接漲停板，錯過這檔就真的沒機會了哦！」',
+        correctIndex: 1,
+        stampTitle: '封條 ②｜識破「限時倒數」飢餓行銷逼單',
+        explanation: '詐騙集團故意設定「只剩最後幾分鐘／最後名額」，目的就是製造錯失恐懼（FOMO），讓你來不及冷靜查證或詢問親友。',
+        shields: [
+          '🛡️ 盾牌 A：趕快趁倒數結束前先轉一點點錢卡位，免得明天後悔',
+          '🛡️ 盾牌 B：刻意製造時間壓力讓人來不及查證！真正的好投資不怕你冷靜思考',
+          '🛡️ 盾牌 C：請助教幫我保留名額到明天早上，我再決定要不要匯款'
+        ]
+      },
+      {
+        wave: '第 3 波話術攻勢',
+        tactic: '類型：假冒主力內線＋誘導私下金流',
+        speech: '「這檔是老師跟外資機構合作的內部鎖碼單，不能透過一般券商下單，必須私下轉帳到指定專屬帳戶才能統一操盤！」',
+        correctIndex: 2,
+        stampTitle: '封條 ③｜看穿「非正規券商＋私下轉帳」陷阱',
+        explanation: '合法證券商受金管會嚴格監管，所有交易都透過本人證券交割帳戶進行，絕不會要求將資金匯入私人或不明公司帳戶。',
+        shields: [
+          '🛡️ 盾牌 A：既然是外資機構合作，那一定比一般散戶更容易賺大錢',
+          '🛡️ 盾牌 B：只要對方能提供統一編號與公司名稱，私下轉帳應該就沒問題',
+          '🛡️ 盾牌 C：正規投資絕不私下匯款給個人或不明帳戶！這是典型人頭戶收款手法'
+        ]
+      },
+      {
+        wave: '第 4 波話術攻勢',
+        tactic: '類型：激將法＋情緒勒索',
+        speech: '「同學，機會只留給果斷的人，難怪你現在還要辛苦打工賺生活費！老師這麼看重你，別讓老師失望了！」',
+        correctIndex: 0,
+        stampTitle: '封條 ④｜抵禦激將法與情緒勒索',
+        explanation: '當利誘與倒數都無效時，詐騙話術常改用「貶低現狀、激將法」刺激自尊心。腳踏實地打工存下來的積蓄，絕不能交給陌生人揮霍！',
+        shields: [
+          '🛡️ 盾牌 A：不被情緒勒索左右！腳踏實地存的積蓄才真實，陌生人不會無故幫我翻身',
+          '🛡️ 盾牌 B：為了證明自己有魄力，決定拿這個月生活費跟老師拚一次',
+          '🛡️ 盾牌 C：跟助教道歉並解釋自己學生沒什麼錢，看看他會不會算便宜一點'
+        ]
+      }
+    ];
+
+    let lv2WaveIndex = 0;
+    let lv2Sanity = 100;
+    let lv2TimeLeft = 15;
+    let lv2Timer = null;
+    let lv2Active = false;
+
+    const level1Wrapper = document.getElementById('level-1-wrapper');
+    const level2Wrapper = document.getElementById('level-2-wrapper');
+    const level3Wrapper = document.getElementById('level-3-wrapper');
+    const navLv1Btn = document.getElementById('nav-lv1');
+    const navLv2Btn = document.getElementById('nav-lv2');
+    const navLv3Btn = document.getElementById('nav-lv3');
+    const stageStatusTag = document.getElementById('stage-status-tag');
+
+    // 切換至第一關視圖
+    function switchToLevel1() {
+      clearStayReviewTimer();
+      lv2Active = false;
+      lv3Active = false;
+      clearInterval(lv2Timer);
+      level2Wrapper.classList.add('hidden');
+      level3Wrapper.classList.add('hidden');
+      level1Wrapper.classList.remove('hidden');
+
+      updateNavLockState(1);
+      stageStatusTag.textContent = level1Completed ? '決策背景圖：狀態 1（群組已標記造假）' : '決策背景圖：狀態 0（群組迷霧）';
+    }
+
+    // 啟動第二關視圖與遊戲（嚴格檢查第一關必須已完成）
+    function startLevel2() {
+      if (!level1Completed || unlockedLevel < 2) {
+        feedbackBannerEl.className = 'bg-[#fef2f2] border border-[#fca5a5] text-[#991b1b] text-xs sm:text-sm rounded-2xl p-3 mb-3 transition-all font-bold';
+        feedbackBannerEl.innerHTML = '🔒 <strong>尚未解鎖：</strong>必須先找出第一關全部 5 個造假破綻，才能進入第二關！';
+        return;
+      }
+      clearStayReviewTimer();
+      isGameOver = true;
+      lv3Active = false;
+      clearInterval(timerInterval);
+      resultModalEl.classList.add('hidden');
+      resultModalEl.classList.remove('flex');
+
+      level1Wrapper.classList.add('hidden');
+      level3Wrapper.classList.add('hidden');
+      level2Wrapper.classList.remove('hidden');
+
+      updateNavLockState(2);
+      stageStatusTag.textContent = '決策背景圖：狀態 1 → 助教逼單中';
+
+      initLevel2();
+    }
+
+    function initLevel2() {
+      clearStayReviewTimer();
+      lv2WaveIndex = 0;
+      lv2Sanity = 100;
+      lv2Active = true;
+
+      document.getElementById('lv2-defused-count').textContent = '0';
+      document.getElementById('lv2-sanity-text').textContent = '100%';
+      document.getElementById('lv2-sanity-bar').style.width = '100%';
+
+      const defusedList = document.getElementById('lv2-defused-list');
+      const placeholder = document.getElementById('lv2-empty-placeholder');
+      defusedList.innerHTML = '';
+      defusedList.appendChild(placeholder);
+      placeholder.classList.remove('hidden');
+
+      const fb = document.getElementById('lv2-feedback-banner');
+      fb.className = 'bg-[#f8fafc] border border-[#cbd5e1] text-[#334155] text-xs sm:text-sm rounded-2xl p-3 mb-3 transition-all';
+      fb.innerHTML = '🛡️ <strong>防守提示：</strong>看穿助教話術背後的心理操控邏輯，點擊下方對應盾牌即可貼上封條！';
+
+      renderLevel2Wave();
+    }
+
+    function renderLevel2Wave() {
+      if (!lv2Active) return;
+      const current = LEVEL2_WAVES[lv2WaveIndex];
+
+      document.getElementById('lv2-wave-badge').textContent = current.wave;
+      document.getElementById('lv2-tactic-tag').textContent = current.tactic;
+      document.getElementById('lv2-threat-text').textContent = current.speech;
+
+      const threatCard = document.getElementById('lv2-threat-card');
+      threatCard.classList.remove('speech-card-anim');
+      void threatCard.offsetWidth;
+      threatCard.classList.add('speech-card-anim');
+
+      const container = document.getElementById('lv2-shields-container');
+      container.innerHTML = '';
+      current.shields.forEach((label, idx) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'w-full text-left bg-white hover:bg-[#eff6ff] border-2 border-[#bfdbfe] hover:border-[#3b82f6] rounded-2xl p-3 text-xs sm:text-sm font-bold text-[#1e293b] shadow-sm transition active:scale-[0.99]';
+        btn.textContent = label;
+        btn.addEventListener('click', () => handleLevel2Choice(idx));
+        container.appendChild(btn);
+      });
+
+      // 啟動本波逼單 15 秒倒數
+      clearInterval(lv2Timer);
+      lv2TimeLeft = 15;
+      const timerEl = document.getElementById('lv2-timer-display');
+      timerEl.textContent = `${lv2TimeLeft}s`;
+      timerEl.className = 'text-lg sm:text-xl font-black text-[#0f172a]';
+
+      lv2Timer = setInterval(() => {
+        if (!lv2Active) return;
+        lv2TimeLeft--;
+        timerEl.textContent = `${lv2TimeLeft}s`;
+        if (lv2TimeLeft <= 5) {
+          timerEl.className = 'text-lg sm:text-xl font-black text-[#dc2626] pulse-soft';
+        }
+        if (lv2TimeLeft <= 0) {
+          clearInterval(lv2Timer);
+          penalizeLevel2('猶豫太久被倒數氣氛壓垮了！理智防線 -20%');
+        }
+      }, 1000);
+    }
+
+    function handleLevel2Choice(selectedIdx) {
+      if (!lv2Active) return;
+      const current = LEVEL2_WAVES[lv2WaveIndex];
+      const fb = document.getElementById('lv2-feedback-banner');
+
+      if (selectedIdx === current.correctIndex) {
+        clearInterval(lv2Timer);
+        lv2WaveIndex++;
+        document.getElementById('lv2-defused-count').textContent = lv2WaveIndex;
+
+        fb.className = 'bg-[#ecfdf5] border border-[#6ee7b7] text-[#065f46] text-xs sm:text-sm rounded-2xl p-3 mb-3 transition-all font-medium';
+        fb.innerHTML = `✅ <strong>成功貼上話術封條！</strong>${current.stampTitle}`;
+
+        // 加入右側已拆解封條列表
+        const placeholder = document.getElementById('lv2-empty-placeholder');
+        if (placeholder) placeholder.classList.add('hidden');
+
+        const stampCard = document.createElement('div');
+        stampCard.className = 'bg-[#eff6ff] border border-[#bfdbfe] rounded-2xl p-3 text-xs speech-card-anim';
+        stampCard.innerHTML = `
+          <div class="font-bold text-[#1d4ed8] mb-1">🏷️ ${current.stampTitle}</div>
+          <div class="text-[#334155] leading-relaxed">${current.explanation}</div>
+        `;
+        document.getElementById('lv2-defused-list').prepend(stampCard);
+
+        if (lv2WaveIndex >= LEVEL2_WAVES.length) {
+          setTimeout(() => endLevel2(true), 450);
+        } else {
+          setTimeout(() => renderLevel2Wave(), 450);
+        }
+      } else {
+        penalizeLevel2('這個想法正中助教下懷！理智防線 -20%');
+      }
+    }
+
+    function penalizeLevel2(reasonText) {
+      lv2Sanity = Math.max(0, lv2Sanity - 20);
+      document.getElementById('lv2-sanity-text').textContent = `${lv2Sanity}%`;
+      document.getElementById('lv2-sanity-bar').style.width = `${lv2Sanity}%`;
+
+      const phoneBox = document.getElementById('lv2-phone-box');
+      phoneBox.classList.remove('shake-anim');
+      void phoneBox.offsetWidth;
+      phoneBox.classList.add('shake-anim');
+
+      const fb = document.getElementById('lv2-feedback-banner');
+      fb.className = 'bg-[#fef2f2] border border-[#fca5a5] text-[#991b1b] text-xs sm:text-sm rounded-2xl p-3 mb-3 transition-all';
+      fb.innerHTML = `⚠️ <strong>防線受損！</strong>${reasonText}`;
+
+      if (lv2Sanity <= 0) {
+        clearInterval(lv2Timer);
+        endLevel2(false, '阿哲被助教的「穩賺不賠」與「最後倒數」徹底說服，手指直接點進了轉帳頁面……');
+      } else if (lv2TimeLeft <= 0) {
+        renderLevel2Wave();
+      }
+    }
+
+    function endLevel2(isWin, failReason = '') {
+      lv2Active = false;
+      clearInterval(lv2Timer);
+
+      const modalIcon = document.getElementById('modal-icon');
+      const modalTitle = document.getElementById('modal-title');
+      const modalDesc = document.getElementById('modal-desc');
+      const storyBridgeBox = document.getElementById('story-bridge-box');
+      const modalStayBtn = document.getElementById('modal-stay-btn');
+      const modalNextBtn = document.getElementById('modal-next-btn');
+      const modalReplayBtn = document.getElementById('modal-replay-btn');
+
+      if (isWin) {
+        // 標記第二關真正完成並解鎖第三關
+        level2Completed = true;
+        unlockedLevel = Math.max(unlockedLevel, 3);
+        updateNavLockState(2);
+
+        stageStatusTag.textContent = '決策背景圖：狀態 2（話術封條已貼上）';
+        modalIcon.textContent = '🛡️';
+        modalIcon.className = 'w-16 h-16 mx-auto rounded-2xl bg-[#dbeafe] flex items-center justify-center text-3xl mb-3';
+        modalTitle.textContent = '第二關過關！已解鎖第三關';
+        modalDesc.textContent = '阿哲長吐一口氣，背靠向椅背冷靜下來：「如果真的穩賺不賠，他們自己貸款買就好了，幹嘛這麼急著逼一個大學生現在匯錢？」';
+        storyBridgeBox.innerHTML = `
+          <div class="font-bold text-[#1d4ed8]">📌 決策背景圖更新（狀態 2）：</div>
+          <div>中央的助教私訊框已被貼上<strong>【高風險話術：假保證＋製造急迫感】</strong>封條！你可以選擇留在畫面檢視 1 分鐘，或直接進入第三關守住最後轉帳鍵！</div>
+        `;
+        modalStayBtn.classList.remove('hidden');
+        modalStayBtn.onclick = () => {
+          startStayReviewMode({
+            onReplay: initLevel2,
+            onNext: startLevel3,
+            nextLabel: '直接進入第三關 →'
+          });
+        };
+        modalReplayBtn.textContent = '↻ 重新挑戰本關';
+        modalReplayBtn.onclick = () => {
+          resultModalEl.classList.add('hidden');
+          resultModalEl.classList.remove('flex');
+          initLevel2();
+        };
+        modalNextBtn.textContent = '直接進入第三關 →';
+        modalNextBtn.onclick = startLevel3;
+        modalNextBtn.classList.remove('hidden');
+      } else {
+        modalIcon.textContent = '😵';
+        modalIcon.className = 'w-16 h-16 mx-auto rounded-2xl bg-[#fee2e2] flex items-center justify-center text-3xl mb-3';
+        modalTitle.textContent = '心理防線失守了！';
+        modalDesc.textContent = failReason;
+        storyBridgeBox.innerHTML = `
+          <div class="font-bold text-[#991b1b]">🔍 防詐小提醒：</div>
+          <div>凡是宣稱「保證穩賺不賠」又用「最後幾分鐘」逼你匯款的，都是經典的心理操控話術。必須完成第二關才能解鎖第三關喔！</div>
+        `;
+        modalStayBtn.classList.add('hidden');
+        modalReplayBtn.textContent = '↻ 重新挑戰本關';
+        modalReplayBtn.onclick = () => {
+          resultModalEl.classList.add('hidden');
+          resultModalEl.classList.remove('flex');
+          initLevel2();
+        };
+        modalNextBtn.classList.add('hidden');
+      }
+
+      resultModalEl.classList.remove('hidden');
+      resultModalEl.classList.add('flex');
+    }
+
+    // ==================== 第三關邏輯與資料：資金流向大考驗 ====================
+    const LEVEL3_QUESTIONS = [
+      {
+        topic: '破除「先轉小額試水溫」迷思',
+        story: '💭 阿哲最後的動搖：「雖然群組跟助教都很可疑，但萬一真的只有這次例外呢？不然我先轉 3,000 元試試水溫，就算被騙也還好吧？」',
+        title: '面對「先轉 3,000 元試水溫」的僥倖心理，阿哲此刻最該怎麼做？',
+        options: [
+          {
+            label: '🛑 立刻停止輸入金額！識破「小額出金養套殺」陷阱，一毛錢都不轉',
+            correct: true,
+            logTitle: '驗證 ①｜看穿「小額試水溫」養套殺劇本',
+            explanation: '詐騙集團最喜歡你「先轉小額測試」！他們常會故意讓你在假系統看到帳面暴賺、甚至讓你小額提領成功，等你放下戒心把全部積蓄甚至貸款投入後，再直接封鎖捲款消失。'
+          },
+          {
+            label: '💸 只轉 3,000 元當作買經驗，有賺就馬上全部領出來',
+            correct: false,
+            explanation: '假投資平台後台數據全由詐騙集團控制，一旦你嘗到小額甜頭就很難全身而退，甚至帳號還可能被利用捲入洗錢風險！'
+          },
+          {
+            label: '📲 先下載助教傳來的「專屬 VIP 操盤 App」看看介面是否專業',
+            correct: false,
+            explanation: '非官方商店（不明連結或描述檔）的投資 App 往往內含木馬程式或假報價系統，下載安裝極可能導致個資與網銀密碼外洩！'
+          }
+        ]
+      },
+      {
+        topic: '核對收款帳戶與金流異常',
+        story: '🔍 阿哲低頭看了一眼轉帳頁面上的收款資訊：「奇怪，助教說這是『量化投資機構的專屬通道』，為什麼收款帳號是一個陌生人（王○明）的個人帳戶？」',
+        title: '看到收款帳戶為「陌生個人帳戶」而非合法證券商，正確的判斷是什麼？',
+        options: [
+          {
+            label: '🤔 可能是公司為了節稅才用財務人員的個人帳戶代收，先匯款再說',
+            correct: false,
+            explanation: '合法金融機構與券商絕不可能要求投資人把資金匯入個人帳戶！這正是標準的「人頭帳戶」收款模式。'
+          },
+          {
+            label: '🚨 100% 是詐騙人頭帳戶！正規投資絕不會要求私下匯款給陌生個人',
+            correct: true,
+            logTitle: '驗證 ②｜識破個人人頭帳戶收款異常',
+            explanation: '合法證券商與投信業者皆受金管會嚴格監管，投資款項必須進入本人開立的合法交割帳戶。凡是要求匯入陌生個人帳戶或不明公司戶的，一律是假投資詐騙。'
+          },
+          {
+            label: '💬 截圖問助教為什麼戶名是個人，聽聽看他的解釋合不合理',
+            correct: false,
+            explanation: '詐騙集團早已備好「VIP 專屬通道分流、避稅代收」等整套假理由，繼續對話只會再次落入話術圈套。'
+          }
+        ]
+      },
+      {
+        topic: '正確查證與安全收尾行動',
+        story: '📱 阿哲已經徹底清醒，手指離開了「確認轉出」鍵，準備徹底斬斷這場騙局並保護自己與其他同學——',
+        title: '關掉轉帳頁面後，阿哲接下來應該採取哪一項最正確的防詐收尾行動？',
+        options: [
+          {
+            label: '🛡️ 封鎖假助教與飆股群組，保留對話與收款帳號截圖，撥打 165 反詐騙專線檢舉',
+            correct: true,
+            logTitle: '驗證 ③｜封鎖＋留證＋通報 165 徹底結案',
+            explanation: '保留詐騙帳號、匯款資訊與對話截圖並通報 165 反詐騙專線，不僅能讓警方即時凍結人頭帳戶、下架假廣告，也能避免更多無辜民眾受害！'
+          },
+          {
+            label: '📢 在飆股群組裡大罵他們是詐騙集團，提醒所有群友快逃',
+            correct: false,
+            explanation: '群組裡幾乎全是詐騙集團的暗樁，在群裡揭穿只會立刻被踢出群組並封鎖，反而來不及完整截圖存證給 165 警方。'
+          },
+          {
+            label: '🙈 直接刪除 App 假裝沒發生過，把可疑帳號留著以後偶爾觀察',
+            correct: false,
+            explanation: '不封鎖也不檢舉，未來仍可能收到對方更換頭貼後的二次詐騙訊息，通報 165 才能真正阻斷犯罪鏈。'
+          }
+        ]
+      }
+    ];
+
+    let lv3StepIndex = 0;
+    let lv3Sanity = 100;
+    let lv3Active = false;
+
+    // 啟動第三關視圖與遊戲（嚴格檢查第一、二關必須皆已完成）
+    function startLevel3() {
+      if (!level1Completed || !level2Completed || unlockedLevel < 3) {
+        const fb2 = document.getElementById('lv2-feedback-banner');
+        if (fb2) {
+          fb2.className = 'bg-[#fef2f2] border border-[#fca5a5] text-[#991b1b] text-xs sm:text-sm rounded-2xl p-3 mb-3 transition-all font-bold';
+          fb2.innerHTML = '🔒 <strong>尚未解鎖：</strong>必須先完成第二關全部 4 波話術拆彈，才能進入第三關！';
+        }
+        return;
+      }
+      clearStayReviewTimer();
+      lv2Active = false;
+      clearInterval(lv2Timer);
+      resultModalEl.classList.add('hidden');
+      resultModalEl.classList.remove('flex');
+
+      level1Wrapper.classList.add('hidden');
+      level2Wrapper.classList.add('hidden');
+      level3Wrapper.classList.remove('hidden');
+
+      updateNavLockState(3);
+      stageStatusTag.textContent = '決策背景圖：狀態 2 → 轉帳最後防線';
+
+      initLevel3();
+    }
+
+    function initLevel3() {
+      clearStayReviewTimer();
+      lv3StepIndex = 0;
+      lv3Sanity = 100;
+      lv3Active = true;
+
+      document.getElementById('lv3-step-count').textContent = '0';
+      document.getElementById('lv3-sanity-text').textContent = '100%';
+      document.getElementById('lv3-sanity-bar').style.width = '100%';
+
+      const lockBadge = document.getElementById('lv3-lock-badge');
+      lockBadge.className = 'text-[11px] font-bold bg-[#fef3c7] text-[#92400e] px-2.5 py-0.5 rounded-full';
+      lockBadge.textContent = '⚠️ 待確認轉出';
+
+      const feedbackEl = document.getElementById('lv3-feedback-banner');
+      feedbackEl.className = 'bg-[#ecfdf5] border border-[#a7f3d0] text-[#065f46] text-xs sm:text-sm rounded-2xl p-3 mb-3 transition-all';
+      feedbackEl.innerHTML = '💡 <strong>關鍵提醒：</strong>一旦按下「確認轉出」，資金就會瞬間流向人頭帳戶！請幫阿哲做出最冷靜的防詐行動。';
+
+      const logEl = document.getElementById('lv3-verified-log');
+      const placeholderEl = document.getElementById('lv3-empty-placeholder');
+      logEl.innerHTML = '';
+      logEl.appendChild(placeholderEl);
+      placeholderEl.classList.remove('hidden');
+
+      renderLevel3Question();
+    }
+
+    function renderLevel3Question() {
+      if (!lv3Active) return;
+      const q = LEVEL3_QUESTIONS[lv3StepIndex];
+
+      document.getElementById('lv3-q-badge').textContent = `關卡考驗 ${lv3StepIndex + 1} / ${LEVEL3_QUESTIONS.length}`;
+      document.getElementById('lv3-q-topic').textContent = q.topic;
+      document.getElementById('lv3-story-prompt').innerHTML = q.story;
+      document.getElementById('lv3-q-title').textContent = q.title;
+
+      const qCard = document.getElementById('lv3-question-card');
+      qCard.classList.remove('speech-card-anim');
+      void qCard.offsetWidth;
+      qCard.classList.add('speech-card-anim');
+
+      const container = document.getElementById('lv3-options-container');
+      container.innerHTML = '';
+      q.options.forEach((opt) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'w-full text-left bg-[#f8fafc] hover:bg-[#ecfdf5] border-2 border-[#cbd5e1] hover:border-[#10b981] rounded-2xl p-3 text-xs sm:text-sm font-bold text-[#1e293b] shadow-sm transition active:scale-[0.99]';
+        btn.textContent = opt.label;
+        btn.addEventListener('click', () => handleLevel3Choice(opt));
+        container.appendChild(btn);
+      });
+    }
+
+    function handleLevel3Choice(opt) {
+      if (!lv3Active) return;
+      const feedbackEl = document.getElementById('lv3-feedback-banner');
+
+      if (opt.correct) {
+        lv3StepIndex++;
+        document.getElementById('lv3-step-count').textContent = lv3StepIndex;
+
+        feedbackEl.className = 'bg-[#ecfdf5] border border-[#34d399] text-[#065f46] text-xs sm:text-sm rounded-2xl p-3 mb-3 transition-all font-medium';
+        feedbackEl.innerHTML = `✅ <strong>防線強化成功！</strong>${opt.logTitle}`;
+
+        const placeholderEl = document.getElementById('lv3-empty-placeholder');
+        if (placeholderEl) placeholderEl.classList.add('hidden');
+
+        const card = document.createElement('div');
+        card.className = 'bg-[#ecfdf5] border border-[#a7f3d0] rounded-2xl p-3 text-xs speech-card-anim';
+        card.innerHTML = `
+          <div class="font-bold text-[#047857] mb-1">🔐 ${opt.logTitle}</div>
+          <div class="text-[#334155] leading-relaxed">${opt.explanation}</div>
+        `;
+        document.getElementById('lv3-verified-log').prepend(card);
+
+        if (lv3StepIndex >= LEVEL3_QUESTIONS.length) {
+          const lockBadge = document.getElementById('lv3-lock-badge');
+          lockBadge.className = 'text-[11px] font-bold bg-[#dcfce7] text-[#166534] px-2.5 py-0.5 rounded-full';
+          lockBadge.textContent = '🔒 安全已鎖定・停止轉帳';
+          setTimeout(() => endLevel3(true), 450);
+        } else {
+          setTimeout(() => renderLevel3Question(), 500);
+        }
+      } else {
+        lv3Sanity = Math.max(0, lv3Sanity - 35);
+        document.getElementById('lv3-sanity-text').textContent = `${lv3Sanity}%`;
+        document.getElementById('lv3-sanity-bar').style.width = `${lv3Sanity}%`;
+
+        const phoneBox = document.getElementById('lv3-phone-box');
+        phoneBox.classList.remove('shake-anim');
+        void phoneBox.offsetWidth;
+        phoneBox.classList.add('shake-anim');
+
+        feedbackEl.className = 'bg-[#fef2f2] border border-[#fca5a5] text-[#991b1b] text-xs sm:text-sm rounded-2xl p-3 mb-3 transition-all';
+        feedbackEl.innerHTML = `⚠️ <strong>危險決策！</strong>${opt.explanation}（存款安全值 -35%）`;
+
+        if (lv3Sanity <= 0) {
+          endLevel3(false, '阿哲一時心軟按下了轉帳與不明連結，辛苦存了半年的打工積蓄瞬間流向詐騙人頭帳戶！');
+        }
+      }
+    }
+
+    function endLevel3(isWin, failReason = '') {
+      lv3Active = false;
+
+      const modalIcon = document.getElementById('modal-icon');
+      const modalTitle = document.getElementById('modal-title');
+      const modalDesc = document.getElementById('modal-desc');
+      const storyBridgeBox = document.getElementById('story-bridge-box');
+      const modalStayBtn = document.getElementById('modal-stay-btn');
+      const modalNextBtn = document.getElementById('modal-next-btn');
+      const modalReplayBtn = document.getElementById('modal-replay-btn');
+
+      if (isWin) {
+        stageStatusTag.textContent = '決策背景圖：狀態 3（安全結局・防線全滿）';
+        modalIcon.textContent = '🏆';
+        modalIcon.className = 'w-16 h-16 mx-auto rounded-2xl bg-[#dcfce7] flex items-center justify-center text-3xl mb-3';
+        modalTitle.textContent = '全劇終！成功守住最後一道防線';
+        modalDesc.textContent = '阿哲果斷按下返回鍵，一分錢都沒有轉出，並將假助教與飆股群組一併檢舉通報 165。書桌恢復了寧靜，他安心地重新打開課堂筆記。';
+        storyBridgeBox.innerHTML = `
+          <div class="font-bold text-[#047857]">📌 決策背景圖最終狀態（狀態 3｜防詐總結）：</div>
+          <div>「詐騙從來不是因為你不夠聰明，而是它精準踩中了你想翻身、怕錯過的那一秒。凡是『群組報明牌、保證穩賺不賠、催促現在轉帳』，一律先停手、先查證，守住轉帳鍵，就守住了你的全部！」</div>
+        `;
+        modalStayBtn.classList.remove('hidden');
+        modalStayBtn.onclick = () => {
+          startStayReviewMode({
+            onReplay: initLevel3,
+            onNext: switchToLevel1,
+            nextLabel: '回第一關重新體驗 ↺'
+          });
+        };
+        modalReplayBtn.textContent = '↻ 重新挑戰本關';
+        modalReplayBtn.onclick = () => {
+          resultModalEl.classList.add('hidden');
+          resultModalEl.classList.remove('flex');
+          initLevel3();
+        };
+        modalNextBtn.textContent = '從第一關重新完整體驗 ↺';
+        modalNextBtn.onclick = () => {
+          resultModalEl.classList.add('hidden');
+          resultModalEl.classList.remove('flex');
+          switchToLevel1();
+        };
+        modalNextBtn.classList.remove('hidden');
+      } else {
+        modalIcon.textContent = '💸';
+        modalIcon.className = 'w-16 h-16 mx-auto rounded-2xl bg-[#fee2e2] flex items-center justify-center text-3xl mb-3';
+        modalTitle.textContent = '最後一道防線失守了！';
+        modalDesc.textContent = failReason;
+        storyBridgeBox.innerHTML = `
+          <div class="font-bold text-[#991b1b]">🔍 防詐小提醒：</div>
+          <div>千萬不要抱持「先轉小額試水溫」的僥倖心理！點擊「重新挑戰本關」，幫阿哲守住辛苦存下的積蓄吧！</div>
+        `;
+        modalStayBtn.classList.add('hidden');
+        modalReplayBtn.textContent = '↻ 重新挑戰本關';
+        modalReplayBtn.onclick = () => {
+          resultModalEl.classList.add('hidden');
+          resultModalEl.classList.remove('flex');
+          initLevel3();
+        };
+        modalNextBtn.classList.add('hidden');
+      }
+
+      resultModalEl.classList.remove('hidden');
+      resultModalEl.classList.add('flex');
+    }
+
+    // 綁定破綻熱區點擊事件（阻止冒泡避免觸發誤點）
+    document.querySelectorAll('.clue-hotspot').forEach(el => {
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const clueId = Number(el.getAttribute('data-clue-id'));
+        handleClueClick(clueId);
+      });
+    });
+
+    // 點擊聊天室其他無破綻區域觸發誤點懲罰
+    document.getElementById('chat-area').addEventListener('click', () => {
+      handleMisclick();
+    });
+
+    // 綁定提示、重玩與進入各關按鈕
+    hintBtnEl.addEventListener('click', useHint);
+    document.getElementById('restart-btn').addEventListener('click', initGame);
+    document.getElementById('modal-replay-btn').addEventListener('click', initGame);
+    document.getElementById('lv2-restart-btn').addEventListener('click', initLevel2);
+    document.getElementById('lv3-restart-btn').addEventListener('click', initLevel3);
+    navLv1Btn.addEventListener('click', switchToLevel1);
+    navLv2Btn.addEventListener('click', startLevel2);
+    navLv3Btn.addEventListener('click', startLevel3);
+
+    document.getElementById('modal-next-btn').addEventListener('click', startLevel2);
+
+    // 頁面載入後啟動遊戲
+    window.onload = function () {
+      level1Completed = false;
+      level2Completed = false;
+      unlockedLevel = 1;
+      updateNavLockState(1);
+      initGame();
+    };
+  </script>
+</body>
+</html>
